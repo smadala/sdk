@@ -6,6 +6,7 @@
 param(
     [string]$Configuration="Debug",
     [string]$Platform="Any CPU",
+    [string]$Verbosity="diagnostic",
     [switch]$RealSign,
     [switch]$Help)
 
@@ -16,6 +17,7 @@ if($Help)
     Write-Host "Options:"
     Write-Host "  -Configuration <CONFIGURATION>     Build the specified Configuration (Debug or Release, default: Debug)"
     Write-Host "  -Platform <PLATFORM>               Build the specified Platform (Any CPU)"
+    Write-Host "  -Verbosity <VERBOSITY>             Build verbosity (default: diagnostic)"
     Write-Host "  -RealSign                          Sign the output DLLs"
     Write-Host "  -Help                              Display this help message"
     exit 0
@@ -59,14 +61,14 @@ if ($RealSign) {
     $signType = 'real'
 }
 
-$commonBuildArgs = echo $RepoRoot\build\build.proj /m /nologo /p:Configuration=$Configuration /p:Platform=$Platform /p:SignType=$signType 
+$commonBuildArgs = echo $RepoRoot\build\build.proj /m /nologo /p:Configuration=$Configuration /p:Platform=$Platform /p:SignType=$signType /p:Verbosity=$Verbosity
 
 # NET Core Build 
 $msbuildSummaryLog = Join-Path -path $logPath -childPath "sdk.log"
 $msbuildWarningLog = Join-Path -path $logPath -childPath "sdk.wrn"
 $msbuildFailureLog = Join-Path -path $logPath -childPath "sdk.err"
 
-dotnet build $commonBuildArgs /flp1:Summary`;Verbosity=diagnostic`;Encoding=UTF-8`;LogFile=$msbuildSummaryLog /flp2:WarningsOnly`;Verbosity=diagnostic`;Encoding=UTF-8`;LogFile=$msbuildWarningLog /flp3:ErrorsOnly`;Verbosity=diagnostic`;Encoding=UTF-8`;LogFile=$msbuildFailureLog
+dotnet build $commonBuildArgs /flp1:Summary`;Encoding=UTF-8`;LogFile=$msbuildSummaryLog /flp2:WarningsOnly`;Encoding=UTF-8`;LogFile=$msbuildWarningLog /flp3:ErrorsOnly`;Encoding=UTF-8`;LogFile=$msbuildFailureLog
 if($LASTEXITCODE -ne 0) { throw "Failed to build" }
 
 # Template Build
@@ -91,5 +93,5 @@ if (!(Test-Path $nuget))
 & $nuget restore $RepoRoot\sdk-templates.sln
 if($LASTEXITCODE -ne 0) { throw "Failed to restore nuget packages for templates" }
 
-msbuild $commonBuildArgs /nr:false /p:BuildTemplates=true /flp1:Summary`;Verbosity=diagnostic`;Encoding=UTF-8`;LogFile=$msbuildSummaryLog /flp2:WarningsOnly`;Verbosity=diagnostic`;Encoding=UTF-8`;LogFile=$msbuildWarningLog /flp3:ErrorsOnly`;Verbosity=diagnostic`;Encoding=UTF-8`;LogFile=$msbuildFailureLog
+msbuild $commonBuildArgs /nr:false /p:BuildTemplates=true /flp1:Summary`;Encoding=UTF-8`;LogFile=$msbuildSummaryLog /flp2:WarningsOnly`;Encoding=UTF-8`;LogFile=$msbuildWarningLog /flp3:ErrorsOnly`;Encoding=UTF-8`;LogFile=$msbuildFailureLog
 if($LASTEXITCODE -ne 0) { throw "Failed to build templates" }
